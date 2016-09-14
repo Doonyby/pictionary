@@ -1,20 +1,35 @@
 var pictionary = function() {
     var socket = io();
     var canvas, context;
+
+    
+    function playerStatus(name) {
+        if (name === "Player 1") {
+            $('#status').text("You are " + name + "! You are the drawing this round. You must draw the word below.");
+        }
+        else {
+            $('#status').text("You are " + name + "! You are the guessing this round. You must enter guesses in the text box below.")
+        }
+    };
+    socket.on('whichPlayer', playerStatus);
+    
+    function currentWord(word) {
+        $('#guess').html('<p>' + word.toUpperCase() + '</p>');
+    }
+    socket.on('randomWord', currentWord);
     
     var guessBox;
     var onKeyDown = function(event) {
         if (event.keyCode != 13) { // Enter
             return;
         }
-    
         var guess = guessBox.val();
         socket.emit('guess', guess);
         guessBox.val('');
     };
     
     var displayGuess = function(guess) {
-        $('#displayGuess').text(guess)
+        $('#displayGuess').text(guess);
     }
     
     guessBox = $('#guess input');
@@ -35,10 +50,8 @@ var pictionary = function() {
     canvas[0].height = canvas[0].offsetHeight;
     var drawing = false;
     canvas.mousedown(function() {
-        console.log('down');
         drawing = true;
     }).mouseup(function() {
-        console.log('up');
         drawing = false;
     }).on('mousemove', function(event) {
         if (drawing) {
@@ -51,6 +64,11 @@ var pictionary = function() {
     });
         
     socket.on('position', draw);
+    
+    function weHaveWinner(name) {
+        console.log(name);
+    };
+    socket.on('weHaveWinner', weHaveWinner);
 };
 
 $(document).ready(function() {

@@ -23,18 +23,35 @@ var WORDS = [
     "rock", "order", "fire", "problem", "piece", "top", "bottom", "king",
     "space"
 ];
-var random = Math.floor(Math.random * WORDS.length);
+var random = Math.floor(Math.random() * WORDS.length);
 var randomWord = WORDS[random];
 var players = [];
-var count = 0;
+var count = 1;
 
+function getPlayerName(id) {
+    for (var i=0; i<=players.length; i++) {
+        if (players[i].id === id) {
+            return players[i].name;
+        }
+    }
+};
+
+var currentWord;
 io.on('connection', function(socket) {
     console.log('connection made');
     var newPlayer = {};
     newPlayer.id = socket.id;
-    newPlayer.name = "player " + count++;
+    newPlayer.name = "Player " + count++;
     players.push(newPlayer);
-    console.log(players);
+    socket.emit('whichPlayer', newPlayer.name);
+    if (newPlayer.name === "Player 1") {
+        currentWord = randomWord;
+        socket.emit('randomWord', currentWord);
+    }
+    
+    function startGame(player) {
+        
+    }
     
    
     socket.on('position', function(position) {
@@ -42,8 +59,19 @@ io.on('connection', function(socket) {
     });
     
     socket.on('guess', function(guess) {
-        io.emit('guess', guess);
+        if (guess.toLowerCase() == currentWord) {
+            weHaveWinner(getPlayerName(socket.id));
+            io.emit('guess', getPlayerName(socket.id) + " wins, by having guessed " + guess.toUpperCase() + "!!!");
+        }
+        else {
+            io.emit('guess', "guesses: " + guess);
+        }
     });
+    
+    function weHaveWinner(name) {
+        console.log(name);
+        io.emit('weHaveWinner', name);
+    };
    
 });
 
