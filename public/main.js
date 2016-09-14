@@ -1,22 +1,18 @@
 var pictionary = function() {
     var socket = io();
     var canvas, context;
-
     
-    function playerStatus(name) {
-        if (name === "Player 1") {
-            $('#status').text("You are " + name + "! You are the drawing this round. You must draw the word below.");
+    function startGame(playerObj) {
+        if (playerObj.name === "Player 1") {
+            $('#status').text("You are " + playerObj.name + "! You are the drawing this round. You must draw the word below.");
+            $('#guess').html('<p>' + playerObj.word.toUpperCase() + '</p>');
         }
         else {
-            $('#status').text("You are " + name + "! You are the guessing this round. You must enter guesses in the text box below.")
+            $('#status').text("You are " + playerObj.name + "! You are the guessing this round. You must enter guesses in the text box below.")
         }
-    };
-    socket.on('whichPlayer', playerStatus);
-    
-    function currentWord(word) {
-        $('#guess').html('<p>' + word.toUpperCase() + '</p>');
+        console.log(playerObj);
     }
-    socket.on('randomWord', currentWord);
+    socket.on('startGame', startGame);
     
     var guessBox;
     var onKeyDown = function(event) {

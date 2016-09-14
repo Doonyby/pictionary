@@ -36,21 +36,20 @@ function getPlayerName(id) {
     }
 };
 
-var currentWord;
+var currentWord = randomWord;
 io.on('connection', function(socket) {
     console.log('connection made');
     var newPlayer = {};
     newPlayer.id = socket.id;
     newPlayer.name = "Player " + count++;
     players.push(newPlayer);
-    socket.emit('whichPlayer', newPlayer.name);
-    if (newPlayer.name === "Player 1") {
-        currentWord = randomWord;
-        socket.emit('randomWord', currentWord);
-    }
-    
+    startGame(newPlayer.name);
     function startGame(player) {
-        
+        playerObj = {};
+        playerObj.word = currentWord;
+        playerObj.name = player;
+        socket.emit('startGame', playerObj);
+
     }
     
    
