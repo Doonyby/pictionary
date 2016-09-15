@@ -37,6 +37,8 @@ function getPlayerName(id) {
 };
 
 var currentWord = randomWord;
+var currentDrawer = "Player 1";
+
 io.on('connection', function(socket) {
     console.log('connection made');
     var newPlayer = {};
@@ -44,15 +46,16 @@ io.on('connection', function(socket) {
     newPlayer.name = "Player " + count++;
     players.push(newPlayer);
     startGame(newPlayer.name);
+    console.log(players);
+    
     function startGame(player) {
-        playerObj = {};
+        var playerObj = {};
+        playerObj.drawer = currentDrawer;
         playerObj.word = currentWord;
         playerObj.name = player;
         socket.emit('startGame', playerObj);
-
     }
     
-   
     socket.on('position', function(position) {
         io.emit('position', position);
     });
@@ -68,9 +71,15 @@ io.on('connection', function(socket) {
     });
     
     function weHaveWinner(name) {
-        console.log(name);
         io.emit('weHaveWinner', name);
     };
+    
+    socket.on('restart', function(name) {
+        currentWord = randomWord;
+        currentDrawer = name;
+        io.emit('startGame', playerObj);
+        console.log(name);
+    });
    
 });
 

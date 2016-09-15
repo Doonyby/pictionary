@@ -3,7 +3,7 @@ var pictionary = function() {
     var canvas, context;
     
     function startGame(playerObj) {
-        if (playerObj.name === "Player 1") {
+        if (playerObj.name === playerObj.drawer) {
             $('#status').text("You are " + playerObj.name + "! You are the drawing this round. You must draw the word below.");
             $('#guess').html('<p>' + playerObj.word.toUpperCase() + '</p>');
         }
@@ -62,7 +62,10 @@ var pictionary = function() {
     socket.on('position', draw);
     
     function weHaveWinner(name) {
-        console.log(name);
+        $('#restart').html('<p>Press the "restart" button to play again with ' + name + ' drawing.</p><br><button id="restart">Restart</button>');
+        $('#restart').on('click', function() {
+            socket.emit('restart', name);
+        });
     };
     socket.on('weHaveWinner', weHaveWinner);
 };
