@@ -8,6 +8,14 @@ app.use(express.static('public'));
 var server = http.Server(app);
 var io = socket_io(server);
 
+function getPlayerName(id) {
+    for (var i=0; i<=game.players.length; i++) {
+        if (game.players[i].id === id) {
+            return game.players[i].name;
+        }
+    }
+}
+
 var WORDS = [
     "word", "letter", "number", "person", "pen", "class", "people",
     "sound", "water", "side", "place", "man", "men", "woman", "women", "boy",
@@ -23,37 +31,49 @@ var WORDS = [
     "rock", "order", "fire", "problem", "piece", "top", "bottom", "king",
     "space"
 ];
-var random = Math.floor(Math.random() * WORDS.length);
-var randomWord = WORDS[random];
-var players = [];
-var count = 1;
 
-function getPlayerName(id) {
-    for (var i=0; i<=players.length; i++) {
-        if (players[i].id === id) {
-            return players[i].name;
+var Word = function() {
+    var random = Math.floor(Math.random() * WORDS.length);
+    this.randomWord = WORDS[random];
+};
+
+var game = {
+    word: new Word(),
+    players: [],
+    turn: 0,
+    nextTurn: function() {
+        this.turn++;
+        if (this.turn == this.players.length) {
+            this.turn = 0;
         }
     }
 };
-
-var currentWord = randomWord;
-var currentDrawer = "Player 1";
+var count = 1;
 
 io.on('connection', function(socket) {
     console.log('connection made');
     var newPlayer = {};
     newPlayer.id = socket.id;
     newPlayer.name = "Player " + count++;
-    players.push(newPlayer);
-    startGame(newPlayer.name);
-    console.log(players);
+    game.players.push(newPlayer);
+    collectPlayer(newPlayer.name);
     
-    function startGame(player) {
-        var playerObj = {};
-        playerObj.drawer = currentDrawer;
-        playerObj.word = currentWord;
-        playerObj.name = player;
-        socket.emit('startGame', playerObj);
+    function collectPlayer(name) {
+        if (name === game.players[game.turn].name) {
+            setDrawer(game);
+        } 
+        else {
+            setGuesser(name);
+        }
+        
+    }
+    
+    function setDrawer(game) {
+        socket.emit('setDrawer', game); 
+    }
+    
+    function setGuesser(name) {
+        socket.emit('setGuesser', name); 
     }
     
     socket.on('position', function(position) {
@@ -61,24 +81,19 @@ io.on('connection', function(socket) {
     });
     
     socket.on('guess', function(guess) {
-        if (guess.toLowerCase() == currentWord) {
-            weHaveWinner(getPlayerName(socket.id));
+        if (guess.toLowerCase() == game.word.randomWord) {
             io.emit('guess', getPlayerName(socket.id) + " wins, by having guessed " + guess.toUpperCase() + "!!!");
+            io.emit('weHaveWinner', getPlayerName(socket.id));
         }
         else {
             io.emit('guess', "guesses: " + guess);
         }
     });
     
-    function weHaveWinner(name) {
-        io.emit('weHaveWinner', name);
-    };
-    
-    socket.on('restart', function(name) {
-        currentWord = randomWord;
-        currentDrawer = name;
-        io.emit('startGame', playerObj);
-        console.log(name);
+    socket.on('restart', function() {
+        game.word = new Word;
+        game.nextTurn();
+        io.emit('clearUi', game);       
     });
    
 });
